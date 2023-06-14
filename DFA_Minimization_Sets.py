@@ -1,9 +1,11 @@
 import copy
 
 # Notes:
-# 1. Finish adding comments
-# 2. Fix notation in "identify_outliers" function
-# 3. Add function to see minimized DFA transition table
+# 1. Clean up the code by adjusting the functions into classes
+# 2. Adjust notation output for getting transition table on single elements in list
+#           i.e [["A", "B"], ["C"]] should be [["A", "B"], "C"]
+# x. Adjust how the finite automata is input (ideally image) 
+# y. Add Myhill-Nerode method (At the moment only conducts Equivalence Method)
 
 class InvalidDeterministicFiniteAutomata(Exception):
     "Invalid Finite Automata Input Detected"
@@ -70,12 +72,12 @@ def check_transitions(dfa, full_set, inner_set, alphabet):
     return temp_tran_loc
 
 # The following function determines which states should be moved from their list.
-def identify_outliers(dfa, transitions, previous_set, alphabet):
+def identify_outliers(transitions, previous_set):
     count_dict = {}
 
     # Iterate over every state and its list locations, saving them to the dictionary
-    for value in transitions.values():
-        count_dict[tuple(value)] = count_dict.get(tuple(value), 0) + 1
+    for state in transitions.values():
+        count_dict[tuple(state)] = count_dict.get(tuple(state), 0) + 1
 
     # Extract the list with the highest count to identify the majority
     majority_list = max(count_dict, key=count_dict.get)
@@ -102,22 +104,61 @@ def identify_outliers(dfa, transitions, previous_set, alphabet):
     else:
         return updated_set
 
+# The minimize_dfa function recursively splits the initial sets until they no longer change
 def minimize_dfa(dfa, split_set, alphabet, prev=None):
+    # Save the set before it is modified
     current_set = split_set
 
+    # Go over every set in the list
     for split_states in split_set:
+        # If there is only 1 element, don't check
         if len(split_states) < 2:
             pass
 
         else:
+            # Otherwise first check the transitions, identify outliers within the current set and split them
             transition_list = check_transitions(dfa, split_set, split_states, alphabet)
-            minimized_set = identify_outliers(dfa, transition_list, split_set, alphabet)
+            minimized_set = identify_outliers(transition_list, split_set)
+            # Update the input set
             split_set = minimized_set
 
+    # Check the saved set against the updated set, if it changed run the function again
     if current_set != minimized_set:
         return minimize_dfa(dfa, minimized_set, alphabet, current_set)
+    
+    # Once there are no more changes, return the minimized dfa set
     else:
         return minimized_set
+
+# The get_transition_table function matches the new combined states and get the union of their transitions
+def get_transition_table(input_dfa, minimized_dfa_sets, symbols):
+    minimized_dfa = {}
+
+    # Go over every set of combined states
+    for state_set in minimized_dfa_sets:
+
+        # If ther eis only a single state, then simply copy over the transitions
+        if len(state_set) < 2:
+            minimized_dfa[state_set[0]] = input_dfa[state_set[0]]
+
+        else:
+            # Otherwise create a new list to keep track of symbols of the states' transitions
+            new_transitions = [[] for i in range(len(symbols))]
+
+            # For each state get their transitions
+            for state in state_set:
+                state_transitions = input_dfa[state]
+                
+                # Add them to the new list depending on their transition symbol
+                for index, transition in enumerate(state_transitions):
+                    if len(new_transitions[index]) == 0 or transition not in new_transitions[index]:
+                        new_transitions[index].append(transition)
+                    
+            # Add this unon to the newly made dictionary
+            minimized_dfa[str(state_set)] = new_transitions
+
+    return minimized_dfa
+    
             
 if __name__ == "__main__":
     # Change alphabet when more characters
@@ -146,9 +187,13 @@ if __name__ == "__main__":
 
     # Print out the new minimized DFA sets
     print("The minimized DFA:")
-    print(check_dfa(input_dfa2, symbols), "\n")
+    minimized_sets = check_dfa(input_dfa2, symbols)
+    print(minimized_sets, "\n")
 
     # Print out the new transition table of Minimized DFA
     print("New Transition Table:")
+    minimized_dfa = get_transition_table(input_dfa2, minimized_sets, symbols)
+    for state, transitions in minimized_dfa.items():
+        print(state, ":", transitions)
 
 
