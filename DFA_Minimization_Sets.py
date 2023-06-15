@@ -2,8 +2,6 @@ import copy
 
 # Notes:
 # 1. Clean up the code by adjusting the functions into classes
-# 2. Adjust notation output for getting transition table on single elements in list
-#           i.e [["A", "B"], ["C"]] should be [["A", "B"], "C"]
 # x. Adjust how the finite automata is input (ideally image) 
 # y. Add Myhill-Nerode method (At the moment only conducts Equivalence Method)
 
@@ -153,6 +151,11 @@ def get_transition_table(input_dfa, minimized_dfa_sets, symbols):
                 for index, transition in enumerate(state_transitions):
                     if len(new_transitions[index]) == 0 or transition not in new_transitions[index]:
                         new_transitions[index].append(transition)
+
+            # Separate transitions that are singular
+            for index in range(len(new_transitions)):
+                if len(new_transitions[index]) == 1:
+                    new_transitions[index] = new_transitions[index][0]
                     
             # Add this unon to the newly made dictionary
             minimized_dfa[str(state_set)] = new_transitions
