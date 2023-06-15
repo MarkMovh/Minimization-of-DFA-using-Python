@@ -100,7 +100,7 @@ class DFA_Equivalence_Minimizer(DFA_Scanner):
 
         return temp_tran_loc
 
-    # The following function determines which states should be moved from their list.
+    # The following method determines which states should be moved from their list.
     def identify_outliers(self, transitions, previous_set):
         count_dict = {}
 
@@ -133,7 +133,7 @@ class DFA_Equivalence_Minimizer(DFA_Scanner):
         else:
             return updated_set
 
-    # The minimize_dfa function recursively splits the initial sets until they no longer change
+    # The minimize_dfa method recursively splits the initial sets until they no longer change
     def minimize_dfa(self, dfa, split_set, alphabet, prev=None):
         # Save the set before it is modified
         current_set = split_set
@@ -159,7 +159,7 @@ class DFA_Equivalence_Minimizer(DFA_Scanner):
         else:
             return minimized_set
 
-    # The get_transition_table function matches the new combined states and get the union of their transitions
+    # The get_transition_table method matches the new combined states and get the union of their transitions
     def get_transition_table(self, input_dfa, minimized_dfa_sets, symbols):
         minimized_dfa = {}
 
