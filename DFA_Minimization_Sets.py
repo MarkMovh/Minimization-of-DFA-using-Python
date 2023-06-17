@@ -1,7 +1,9 @@
 import copy
 
 # Notes:
-# 1. Add Myhill-Nerode method (At the moment only conducts Equivalence Method)
+# 1. Add comment explanations for Myhill-Nerode method
+# 2. Add function to get final minimized dfa transitions
+# y. Output a node graph for the minimized DFA
 # x. Adjust how the finite automata is input (ideally image) 
 #       -> First be able to detect states and transitions
 #       -> Be able to identify state names and transition symbols
@@ -193,7 +195,88 @@ class DFA_Equivalence_Minimizer(DFA_Scanner):
 
         return minimized_dfa
     
-            
+# DFA minimizer method based on Myhill-Nerode method
+class DFA_Myhill_Nerode_Minimizer(DFA_Scanner):
+    # Initialize the class by getting the minimized set and dfa
+    def __init__(self, dfa, alphabet):
+        self.dfa = dfa
+        self.alphabet = alphabet
+
+        self.check_dfa()
+
+        initial_table = self.initial_min_table(self.dfa)
+        self.minimized_table = self.fill_table(self.dfa, initial_table)
+
+    def get_minimized_table(self):
+        # print("    ", end="")
+        # for state in list(self.dfa.keys()):
+        #     print(state,", ", end="", sep="")
+        # print("")
+
+        for index, combination in enumerate(self.minimized_table):
+            print(list(self.dfa.keys())[index], combination)
+
+    def check_dfa(self):
+        return DFA_Scanner.check_dfa(self, self.dfa, self.alphabet)
+
+    def initial_min_table(self, dfa):
+        init_table = []
+
+        for state_num in range(len(dfa.keys())):
+            init_table.append([0 for transitions in range(len(dfa.keys()))])
+
+        for row, state_1 in enumerate(dfa.keys()):
+            for column, state_2 in enumerate(dfa.keys()):
+                if ("*" in state_1 and "*" not in state_2) or ("*" not in state_1 and "*" in state_2):
+                    init_table[row][column] = 1
+                else:
+                    pass
+                
+        return init_table
+
+    def fill_table(self, dfa, table):
+        input_table = copy.deepcopy(table)
+
+        for row, state_1 in enumerate(dfa.keys()):
+            for column, state_2 in enumerate(dfa.keys()):
+                if (table[row][column] == 1):
+                    continue
+                if "*" in state_1 and "*" in state_2:
+                    pass
+                if state_1 == state_2:
+                    table[row][column] = "x"
+                else:
+                    connection = self.check_combination(state_1, state_2, dfa, table)
+
+                    if connection:
+                        table[row][column] = 1
+                    else:
+                        pass
+
+        if input_table != table:
+            return self.fill_table(dfa, table)
+        else:
+            return table
+
+    def check_combination(self, state1, state2, dfa, comb_table):
+        state1_transitions = dfa[state1]
+        state2_transitions = dfa[state2]
+
+        combination = False
+
+        for symbol_num in range(len(state1_transitions)):
+            row = list(dfa.keys()).index(state1_transitions[symbol_num])
+            column = list(dfa.keys()).index(state2_transitions[symbol_num])
+
+            if comb_table[row][column] == 1:
+                combination = True
+                break
+
+            else:
+                pass
+        
+        return combination
+
 if __name__ == "__main__":
     # Change alphabet when more characters
     symbols = [0, 1]
@@ -219,12 +302,16 @@ if __name__ == "__main__":
                     "H": ["G", "*C"]
                 }
 
-    DFA_Minimizer = DFA_Equivalence_Minimizer(input_dfa2, symbols)    
-    print("The minimized DFA set:")
-    print(DFA_Minimizer.get_minimized_set(), "\n")
+    # DFA_Minimizer = DFA_Equivalence_Minimizer(input_dfa2, symbols)    
+    # print("The minimized DFA set:")
+    # print(DFA_Minimizer.get_minimized_set(), "\n")
 
-    print("New Transition Table:")
-    minimized_dfa = DFA_Minimizer.get_minimized_dfa()
-    for state, transitions in minimized_dfa.items():
-            print(state, ":", transitions)
+    # print("New Transition Table:")
+    # minimized_dfa = DFA_Minimizer.get_minimized_dfa()
+    # for state, transitions in minimized_dfa.items():
+    #         print(state, ":", transitions)
+
+    DFA_Minimizer = DFA_Myhill_Nerode_Minimizer(input_dfa, symbols)
+    DFA_Minimizer.get_minimized_table()
+
 
