@@ -1,7 +1,8 @@
 import copy
+import ast
 
-# 1. Fix the final transition table creations to include transition combinations of more than 2
-# 2. Make each class inherit methods that are similar / identical
+
+# 1. Make each class inherit methods that are similar / identical
 # y. Output a node graph for the minimized DFA
 # x. Adjust how the finite automata is input (ideally image) 
 #       -> First be able to detect states and transitions
@@ -193,8 +194,34 @@ class DFA_Equivalence_Minimizer(DFA_Scanner):
                     if len(new_transitions[index]) == 1:
                         new_transitions[index] = new_transitions[index][0]
                         
-                # Add this unon to the newly made dictionary
+                # Add this union to the newly made dictionary
                 minimized_dfa[str(state_set)] = new_transitions
+
+        return self.ensure_transitions(minimized_dfa)
+    
+    # The following method ensures that transitions are correctly done
+    def ensure_transitions(self, minimized_dfa):
+
+        # Go over all states, and transitions, moreover going over every transition
+        for state, transitions in minimized_dfa.items():
+            for index, transition in enumerate(transitions):
+                # If transition is in keys, it is correct and pass
+                if transition in list(minimized_dfa.keys()):
+                    pass
+                else:
+                    # Otherwise find the key and replace it on the index-
+                    for key in list(minimized_dfa.keys()):
+                        # based on if it is a list-
+                        if isinstance(transition, list):
+                            if transition[0] in key:
+                                minimized_dfa[state][index] = ast.literal_eval(key)
+                                break
+                        # or if it is based on a single element
+                        else:
+                            if transition in key:
+                                minimized_dfa[state][index] = ast.literal_eval(key)
+                                break
+
 
         return minimized_dfa
     
@@ -330,10 +357,10 @@ class DFA_Myhill_Nerode_Minimizer(DFA_Scanner):
                     if len(new_transitions[index]) == 1:
                         new_transitions[index] = new_transitions[index][0]
                         
-                # Add this unon to the newly made dictionary
+                # Add this union to the newly made dictionary
                 minimized_dfa[str(state_set)] = new_transitions
 
-        return minimized_dfa
+        return self.ensure_transitions(minimized_dfa)
 
     # Method that constructs the minimized dfa set
     def create_minimized_dfa_set(self, min_table, dfa):
@@ -375,7 +402,31 @@ class DFA_Myhill_Nerode_Minimizer(DFA_Scanner):
 
         return minimized_dfa_set
 
+    # The following method ensures that transitions are correctly done
+    def ensure_transitions(self, minimized_dfa):
 
+        # Go over all states, and transitions, moreover going over every transition
+        for state, transitions in minimized_dfa.items():
+            for index, transition in enumerate(transitions):
+                # If transition is in keys, it is correct and pass
+                if transition in list(minimized_dfa.keys()):
+                    pass
+                else:
+                    # Otherwise find the key and replace it on the index-
+                    for key in list(minimized_dfa.keys()):
+                        # based on if it is a list-
+                        if isinstance(transition, list):
+                            if transition[0] in key:
+                                minimized_dfa[state][index] = ast.literal_eval(key)
+                                break
+                        # or if it is based on a single element
+                        else:
+                            if transition in key:
+                                minimized_dfa[state][index] = ast.literal_eval(key)
+                                break
+
+
+        return minimized_dfa
 
 if __name__ == "__main__":
     # Change alphabet when more characters
@@ -412,10 +463,10 @@ if __name__ == "__main__":
                  "q5": ["q5", "q5"]
     }
 
-    # DFA_Minimizer = DFA_Equivalence_Minimizer(input_dfa3, symbols)    
+    # DFA_Minimizer = DFA_Equivalence_Minimizer(input_dfa2, symbols)    
     # DFA_Minimizer.get_minimized_set()
     # DFA_Minimizer.get_minimized_dfa()
     
-    DFA_Minimizer = DFA_Myhill_Nerode_Minimizer(input_dfa3, symbols)
+    DFA_Minimizer = DFA_Myhill_Nerode_Minimizer(input_dfa, symbols)
     DFA_Minimizer.get_minimized_table()
     DFA_Minimizer.get_minized_dfa()
