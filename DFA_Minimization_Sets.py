@@ -1,8 +1,7 @@
 import copy
 import ast
 
-
-# 1. Make each class inherit methods that are similar / identical
+# To do:
 # y. Output a node graph for the minimized DFA
 # x. Adjust how the finite automata is input (ideally image) 
 #       -> First be able to detect states and transitions
@@ -39,17 +38,77 @@ class DFA_Scanner:
         An Automata can only be minimized if it is in deterministic form.
         Convert the input automata into DFA first.
                     ''')
+        
+    # Method that creates the final transition table
+    def get_transition_table(self, input_dfa, minimized_dfa_sets, symbols):
+        minimized_dfa = {}
+
+        # Go over every set of combined states
+        for state_set in minimized_dfa_sets:
+
+            # If there is only a single state, then simply copy over the transitions
+            if len(state_set) < 2:
+                minimized_dfa[state_set[0]] = input_dfa[state_set[0]]
+
+            else:
+                # Otherwise create a new list to keep track of symbols of the states' transitions
+                new_transitions = [[] for i in range(len(symbols))]
+
+                # For each state get their transitions
+                for state in state_set:
+                    state_transitions = input_dfa[state]
+                    
+                    # Add them to the new list depending on their transition symbol
+                    for index, transition in enumerate(state_transitions):
+                        if len(new_transitions[index]) == 0 or transition not in new_transitions[index]:
+                            new_transitions[index].append(transition)
+
+                # Separate transitions that are singular
+                for index in range(len(new_transitions)):
+                    if len(new_transitions[index]) == 1:
+                        new_transitions[index] = new_transitions[index][0]
+                        
+                # Add this union to the newly made dictionary
+                minimized_dfa[str(state_set)] = new_transitions
+
+        return self.ensure_transitions(minimized_dfa)
+    
+    # The following method ensures that transitions are correctly done
+    def ensure_transitions(self, minimized_dfa):
+        
+        # Go over all states, and transitions, moreover going over every transition
+        for state, transitions in minimized_dfa.items():
+            for index, transition in enumerate(transitions):
+                # If transition is in keys, it is correct and pass
+                if transition in list(minimized_dfa.keys()):
+                    pass
+                else:
+                    # Otherwise find the key and replace it on the index-
+                    for key in list(minimized_dfa.keys()):
+                        # based on if it is a list-
+                        if isinstance(transition, list):
+                            if transition[0] in key:
+                                minimized_dfa[state][index] = ast.literal_eval(key)
+                                break
+                        # or if it is based on a single element
+                        else:
+                            if transition in key:
+                                minimized_dfa[state][index] = ast.literal_eval(key)
+                                break
 
 
+        return minimized_dfa
 
 # DFA minimizer method based on equivalence
 class DFA_Equivalence_Minimizer(DFA_Scanner):
+
     # Initialize the class by getting the minimized set and dfa
     def __init__(self, dfa, alphabet):
         self.dfa = dfa
         self.alphabet = alphabet
 
-        self.check_dfa()
+        # Using inheritance, a check method can be created to ensure the FA is DFA
+        DFA_Scanner.check_dfa(self, self.dfa, self.alphabet)
 
         get_first_split = self.initial_split(self.dfa, self.alphabet)
         self.minimized_set = self.minimize_dfa(self.dfa, get_first_split, self.alphabet)
@@ -64,11 +123,6 @@ class DFA_Equivalence_Minimizer(DFA_Scanner):
         print("New Transition Table:")
         for state, transitions in self.minimized_dfa.items():
                 print(state, ":", transitions)
-
-
-    # Using inheritance, a check method can be created to ensure the FA is DFA
-    def check_dfa(self):
-        return DFA_Scanner.check_dfa(self, self.dfa, self.alphabet)
 
     # Get all the states and separate them into two sets:
     # - One containing the final states
@@ -199,8 +253,7 @@ class DFA_Equivalence_Minimizer(DFA_Scanner):
 
         return self.ensure_transitions(minimized_dfa)
     
-    # The following method ensures that transitions are correctly done
-    def ensure_transitions(self, minimized_dfa):
+
 
         # Go over all states, and transitions, moreover going over every transition
         for state, transitions in minimized_dfa.items():
@@ -227,17 +280,20 @@ class DFA_Equivalence_Minimizer(DFA_Scanner):
     
 # DFA minimizer method based on Myhill-Nerode method
 class DFA_Myhill_Nerode_Minimizer(DFA_Scanner):
+
     # Initialize the class by getting the minimized set and dfa
     def __init__(self, dfa, alphabet):
         self.dfa = dfa
         self.alphabet = alphabet
 
-        self.check_dfa()
+        # Using inheritance, a check method can be created to ensure the FA is DFA
+        DFA_Scanner.check_dfa(self, self.dfa, self.alphabet)
 
         initial_table = self.initial_min_table(self.dfa)
         self.minimized_table = self.fill_table(self.dfa, initial_table)
-        self.minimized_dfa = self.get_transition_table(self.minimized_table, self.dfa, self.alphabet)
-
+        self.minimized_set = self.create_minimized_dfa_set(self.minimized_table, self.dfa)
+        self.minimized_dfa = DFA_Scanner.get_transition_table(self, self.dfa, self.minimized_set, self.alphabet)
+    
     # Get method to show the final minimized table
     def get_minimized_table(self):
 
@@ -249,10 +305,6 @@ class DFA_Myhill_Nerode_Minimizer(DFA_Scanner):
         print("New Transition Table:")
         for state, transitions in self.minimized_dfa.items():
                 print(state, ":", transitions)
-
-    # Using inheritance, a check method can be created to ensure the FA is DFA
-    def check_dfa(self):
-        return DFA_Scanner.check_dfa(self, self.dfa, self.alphabet)
 
     # Create an initial table comparing state transitions
     def initial_min_table(self, dfa):
@@ -328,7 +380,7 @@ class DFA_Myhill_Nerode_Minimizer(DFA_Scanner):
         return combination
     
     # Method that creates the final transition table
-    def get_transition_table(self, minimized_table, input_dfa, symbols):
+
         minimized_set = self.create_minimized_dfa_set(minimized_table, input_dfa)
         minimized_dfa = {}
 
@@ -403,7 +455,7 @@ class DFA_Myhill_Nerode_Minimizer(DFA_Scanner):
         return minimized_dfa_set
 
     # The following method ensures that transitions are correctly done
-    def ensure_transitions(self, minimized_dfa):
+
 
         # Go over all states, and transitions, moreover going over every transition
         for state, transitions in minimized_dfa.items():
@@ -463,10 +515,10 @@ if __name__ == "__main__":
                  "q5": ["q5", "q5"]
     }
 
-    # DFA_Minimizer = DFA_Equivalence_Minimizer(input_dfa2, symbols)    
+    # DFA_Minimizer = DFA_Equivalence_Minimizer(input_dfa3, symbols)    
     # DFA_Minimizer.get_minimized_set()
     # DFA_Minimizer.get_minimized_dfa()
     
-    DFA_Minimizer = DFA_Myhill_Nerode_Minimizer(input_dfa, symbols)
+    DFA_Minimizer = DFA_Myhill_Nerode_Minimizer(input_dfa2, symbols)
     DFA_Minimizer.get_minimized_table()
     DFA_Minimizer.get_minized_dfa()
