@@ -1,8 +1,12 @@
 import copy
 import ast
+import matplotlib.pyplot as plt
+import networkx as nx
 
 # To do:
-# y. Output a node graph for the minimized DFA
+# 1. Output a node graph for input graph
+    # -> Look into using netgraph (self-loop labels supported)
+# 2. Fix that initial and final states are correctly formatted.
 # x. Adjust how the finite automata is input (ideally image) 
 #       -> First be able to detect states and transitions
 #       -> Be able to identify state names and transition symbols
@@ -89,15 +93,38 @@ class DFA_Scanner:
                         if isinstance(transition, list):
                             if transition[0] in key:
                                 minimized_dfa[state][index] = ast.literal_eval(key)
+                                #minimized_dfa[state][index] = key
                                 break
                         # or if it is based on a single element
                         else:
                             if transition in key:
                                 minimized_dfa[state][index] = ast.literal_eval(key)
+                                #minimized_dfa[state][index] = key
                                 break
 
 
         return minimized_dfa
+    
+    # The following method draws the specified automata
+    def draw_automata(self, dfa, symbols):
+        dfa_graph = nx.DiGraph()
+
+        # Store all states as nodes
+        for state in list(dfa.keys()):
+            dfa_graph.add_node(state)
+
+        # Connect all states using transitions, and giving them their "weight" symbol
+        for state, transitions in dfa.items():
+            for symbol_index, transition in enumerate(transitions):
+                dfa_graph.add_edge(state, str(transition), weight=symbols[symbol_index])
+
+        # Draw the graph
+        pos=nx.spring_layout(dfa_graph)
+        nx.draw(dfa_graph, pos, with_labels=True, node_size=1000, node_color="#faf38c", font_size=15, font_weight="bold", edgecolors="black")
+        labels = nx.get_edge_attributes(dfa_graph,'weight')
+        nx.draw_networkx_edge_labels(dfa_graph, pos, edge_labels=labels)
+        plt.show()
+
 
 # DFA minimizer method based on equivalence
 class DFA_Equivalence_Minimizer(DFA_Scanner):
@@ -124,6 +151,8 @@ class DFA_Equivalence_Minimizer(DFA_Scanner):
         for state, transitions in self.minimized_dfa.items():
                 print(state, ":", transitions)
 
+    def get_node_graph(self):
+        return DFA_Scanner.draw_automata(self, self.minimized_dfa, self.alphabet)
     # Get all the states and separate them into two sets:
     # - One containing the final states
     # - One containing all other states
@@ -306,6 +335,9 @@ class DFA_Myhill_Nerode_Minimizer(DFA_Scanner):
         for state, transitions in self.minimized_dfa.items():
                 print(state, ":", transitions)
 
+    def get_node_graph(self):
+        return DFA_Scanner.draw_automata(self, self.minimized_dfa, self.alphabet)
+    
     # Create an initial table comparing state transitions
     def initial_min_table(self, dfa):
         init_table = []
@@ -515,10 +547,12 @@ if __name__ == "__main__":
                  "q5": ["q5", "q5"]
     }
 
-    # DFA_Minimizer = DFA_Equivalence_Minimizer(input_dfa3, symbols)    
+    # DFA_Minimizer = DFA_Equivalence_Minimizer(input_dfa, symbols)    
     # DFA_Minimizer.get_minimized_set()
     # DFA_Minimizer.get_minimized_dfa()
+    # DFA_Minimizer.get_node_graph()
     
-    DFA_Minimizer = DFA_Myhill_Nerode_Minimizer(input_dfa2, symbols)
-    DFA_Minimizer.get_minimized_table()
-    DFA_Minimizer.get_minized_dfa()
+    # DFA_Minimizer = DFA_Myhill_Nerode_Minimizer(input_dfa2, symbols)
+    # DFA_Minimizer.get_minimized_table()
+    # DFA_Minimizer.get_minized_dfa()
+    # DFA_Minimizer.get_node_graph()
